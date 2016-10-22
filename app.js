@@ -12,6 +12,10 @@ var session = require('express-session');
 var api = require('./routes/api');
 var authenticate = require('./routes/authenticate')(passport);
 
+var mongoose = require('mongoose');                         //add for Mongo support
+mongoose.connect('mongodb://localhost/testdb');              //connect to Mongo
+var models = require('./models/models');
+
 var app = express();
 
 // view engine setup
