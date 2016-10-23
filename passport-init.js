@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');   
 var User = mongoose.model('User');
+var MovieProfile = mongoose.model('MovieProfile');
 var LocalStrategy   = require('passport-local').Strategy;
 var bCrypt = require('bcrypt-nodejs');
 
@@ -8,6 +9,7 @@ module.exports = function(passport){
     // Passport needs to be able to serialize and deserialize users to support persistent login sessions
     passport.serializeUser(function(user, done) {
         console.log('serializing user:',user.username);
+		console.log(user);
         done(null, user._id);
     });
 
@@ -40,7 +42,8 @@ module.exports = function(passport){
                     }
                     // User and password both match, return user from done method
                     // which will be treated like success
-                    return done(null, user);
+					console.log('Successful login');
+					return done(null, user);
                 }
             );
         }
@@ -65,10 +68,11 @@ module.exports = function(passport){
                 } else {
                     // if there is no user, create the user
                     var newUser = new User();
-
+					
                     // set the user's local credentials
-                    newUser.username = username;
+					newUser.username = username;
                     newUser.password = createHash(password);
+					newUser.movieProfile = new MovieProfile();
 
                     // save the user
                     newUser.save(function(err) {
@@ -76,7 +80,7 @@ module.exports = function(passport){
                             console.log('Error in Saving user: '+err);  
                             throw err;  
                         }
-                        console.log(newUser.username + ' Registration succesful');    
+                        console.log(newUser.username + ' Registration succesful ' + newUser.id);    
                         return done(null, newUser);
                     });
                 }

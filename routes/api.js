@@ -1,5 +1,11 @@
+
+
+var mongoose = require('mongoose');
+var User = mongoose.model('User');
+var MovieProfile = mongoose.model('MovieProfile');
 var express = require('express');
 var router = express.Router();
+var Post = mongoose.model('Post');
 
 //Used for routes that must be authenticated.
 function isAuthenticated (req, res, next) {
@@ -19,39 +25,93 @@ function isAuthenticated (req, res, next) {
     return res.redirect('/#login');
 };
 
+router.route('/preferences/movies')
+	.get(function(req, res) {
+		User.findById(req.body._id, function(err, user){
+			if(err){
+				return res.send(500, err);
+			}
+			MovieProfile.findById(user._id, function(err, movieProfile) {
+					if(err){
+						return res.send(500, err);
+					}
+					return res.json(movieProfile);
+			});
+		});
+	})
+	
+	.post(function(req, res){
+		res.send('post to database');
+	})
+
+
 //Register the authentication middleware
-router.use('/posts', isAuthenticated);
+/*router.use('/posts', isAuthenticated);
 
 //api for all posts
 router.route('/posts')
 
     //create a new post
+    //creates a new post
     .post(function(req, res){
 
-        //TODO create a new post in the database
-        res.send({message:"TODO create a new post in the database"});
+        var post = new Post();
+        post.text = req.body.text;
+        post.created_by = req.body.created_by;
+        post.save(function(err, post) {
+            if (err){
+                return res.send(500, err);
+            }
+            return res.json(post);
+        });
     })
 
+     //gets all posts
     .get(function(req, res){
-
-        //TODO get all the posts in the database
-        res.send({message:"TODO get all the posts in the database"});
-    })
-
-//api for a specfic post
-router.route('/posts/:id')
-
-    //create
-    .put(function(req,res){
-        return res.send({message:'TODO modify an existing post by using param ' + req.param.id});
-    })
-
-    .get(function(req,res){
-        return res.send({message:'TODO get an existing post by using param ' + req.param.id});
-    })
-
-    .delete(function(req,res){
-        return res.send({message:'TODO delete an existing post by using param ' + req.param.id})
+        Post.find(function(err, posts){
+            if(err){
+                return res.send(500, err);
+            }
+            return res.send(posts);
+        });
     });
 
+//post-specific commands. likely won't be used
+router.route('/posts/:id')
+    //gets specified post
+    .get(function(req, res){
+        Post.findById(req.params('id'), function(err, post){
+            if(err)
+                res.send(err);
+            res.json(post);
+        });
+    }) 
+    //updates specified post
+    .put(function(req, res){
+        Post.findById(req.params('id'), function(err, post){
+            if(err)
+                res.send(err);
+
+            post.created_by = req.body.created_by;
+            post.text = req.body.text;
+
+            post.save(function(err, post){
+                if(err)
+                    res.send(err);
+
+                res.json(post);
+            });
+        });
+    })
+    //deletes the post
+    .delete(function(req, res) {
+        Post.remove({
+            _id: req.params.id
+        }, function(err) {
+            if (err)
+                res.send(err);
+            res.json("deleted :(");
+        });
+    });
+*/
 module.exports = router;
