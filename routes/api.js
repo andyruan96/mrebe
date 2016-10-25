@@ -26,92 +26,54 @@ function isAuthenticated (req, res, next) {
 };
 
 router.route('/preferences/movies')
-	.get(function(req, res) {
-		User.findById(req.body._id, function(err, user){
-			if(err){
-				return res.send(500, err);
-			}
-			MovieProfile.findById(user._id, function(err, movieProfile) {
-					if(err){
-						return res.send(500, err);
-					}
-					return res.json(movieProfile);
-			});
+	.post(function(req, res) {
+		User.findById(req.body._id)
+		.populate('movieProfile')
+		.exec(function(err, user){
+			if(err) res.send(504, err);
+			return res.send(user.movieProfile.prefs);
 		});
 	})
 	
-	.post(function(req, res){
-		res.send('post to database');
+	.put(function(req, res){
+		if(req.body.movieTitle === null)
+			return res.send(506, 'nothing to set');
+		User.findById(req.body._id)
+		.populate('movieProfile')
+		.exec(function(err,user){
+			if(err) {
+				return res.send(505, err);
+			}
+			var prefItem = {movie: req.body.movieTitle, liked: req.body.liked}
+			user.movieProfile.prefs.push(prefItem);
+			user.movieProfile.save(function(err){
+				if(err) return res.send(506, err);
+			});
+			return res.send(user);
+		});
 	})
+	
+	.delete(function(req, res) {
+		User.findById(req.body._id)
+		.populate('movieProfile')
+		.exec(function(err, user){
+			if(err) return res.send(507, err);
+			
+			// remove all movies with movieTitle from preferences
+			var prefsArr = user.movieProfile.prefs;
+			for(var i = user.movieProfile.prefs.length-1; i>=0; i--)
+				if(prefsArr[i].movie === req.body.movieTitle)
+					prefsArr.splice(i, 1);
+			
+			user.movieProfile.save(function(err){
+				if(err)return res.send(508,err);
+				return res.send(user.movieProfile.prefs);
+			});
+		});
+	});
 
 
 //Register the authentication middleware
-/*router.use('/posts', isAuthenticated);
+//router.use('/posts', isAuthenticated);
 
-//api for all posts
-router.route('/posts')
-
-    //create a new post
-    //creates a new post
-    .post(function(req, res){
-
-        var post = new Post();
-        post.text = req.body.text;
-        post.created_by = req.body.created_by;
-        post.save(function(err, post) {
-            if (err){
-                return res.send(500, err);
-            }
-            return res.json(post);
-        });
-    })
-
-     //gets all posts
-    .get(function(req, res){
-        Post.find(function(err, posts){
-            if(err){
-                return res.send(500, err);
-            }
-            return res.send(posts);
-        });
-    });
-
-//post-specific commands. likely won't be used
-router.route('/posts/:id')
-    //gets specified post
-    .get(function(req, res){
-        Post.findById(req.params('id'), function(err, post){
-            if(err)
-                res.send(err);
-            res.json(post);
-        });
-    }) 
-    //updates specified post
-    .put(function(req, res){
-        Post.findById(req.params('id'), function(err, post){
-            if(err)
-                res.send(err);
-
-            post.created_by = req.body.created_by;
-            post.text = req.body.text;
-
-            post.save(function(err, post){
-                if(err)
-                    res.send(err);
-
-                res.json(post);
-            });
-        });
-    })
-    //deletes the post
-    .delete(function(req, res) {
-        Post.remove({
-            _id: req.params.id
-        }, function(err) {
-            if (err)
-                res.send(err);
-            res.json("deleted :(");
-        });
-    });
-*/
 module.exports = router;

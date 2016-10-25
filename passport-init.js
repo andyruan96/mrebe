@@ -68,11 +68,19 @@ module.exports = function(passport){
                 } else {
                     // if there is no user, create the user
                     var newUser = new User();
+					var movieProfile = new MovieProfile();
 					
                     // set the user's local credentials
 					newUser.username = username;
                     newUser.password = createHash(password);
-					newUser.movieProfile = new MovieProfile();
+					newUser.movieProfile = movieProfile;
+					
+					movieProfile.save(function(err){
+						if(err) {
+							console.log('Error generating new MovieProfile' + err);
+							throw err;
+						}
+					});
 
                     // save the user
                     newUser.save(function(err) {
